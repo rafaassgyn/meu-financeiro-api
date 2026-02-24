@@ -30,6 +30,14 @@ def iniciar_banco():
     cursor = conn.cursor()
     
     cursor.execute('''
+        CREATE TABLE IF NOT EXISTS plano_contas (
+            id SERIAL PRIMARY KEY,
+            descricao TEXT,
+            tipo TEXT
+        )
+    ''')
+
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS lancamentos (
             id SERIAL PRIMARY KEY,
             tipo TEXT,
@@ -358,3 +366,109 @@ def excluir_lancamento(item_id: int):
         return {"sucesso": True, "mensagem": "Lançamento excluído com sucesso!"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# -------------------------------------------------------------------
+# 12. Rotas do Plano de Contas
+# -------------------------------------------------------------------
+class PlanoContaNovo(BaseModel):
+    descricao: str
+    tipo: str
+
+@app.get("/api/plano-contas")
+def listar_plano_contas():
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, descricao, tipo FROM plano_contas ORDER BY tipo, descricao')
+    linhas = cursor.fetchall()
+    conn.close()
+    return [{"id": l[0], "descricao": l[1], "tipo": l[2]} for l in linhas]
+
+@app.post("/api/plano-contas")
+def criar_plano_conta(conta: PlanoContaNovo):
+    try:
+        conn = conectar_banco()
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO plano_contas (descricao, tipo) VALUES (%s, %s)', (conta.descricao, conta.tipo))
+        conn.commit()
+        conn.close()
+        return {"sucesso": True, "mensagem": "Conta adicionada!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/plano-contas/{item_id}")
+def excluir_plano_conta(item_id: int):
+    try:
+        conn = conectar_banco()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM plano_contas WHERE id = %s', (item_id,))
+        conn.commit()
+        conn.close()
+        return {"sucesso": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# -------------------------------------------------------------------
+# 13. Rota GET: Listar Metas do Ano
+# -------------------------------------------------------------------
+@app.get("/api/metas/listar/{ano}")
+def listar_metas_ano(ano: str):
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    cursor.execute('SELECT mes, meta_receita, meta_despesa FROM metas WHERE ano = %s ORDER BY mes', (ano,))
+    linhas = cursor.fetchall()
+    conn.close()
+    return [{"mes": l[0], "meta_receita": l[1], "meta_despesa": l[2]} for l in linhas]
+
+
+# -------------------------------------------------------------------
+# 14. Rotas do Plano de Contas
+# -------------------------------------------------------------------
+class PlanoContaNovo(BaseModel):
+    descricao: str
+    tipo: str
+
+@app.get("/api/plano-contas")
+def listar_plano_contas():
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, descricao, tipo FROM plano_contas ORDER BY tipo, descricao')
+    linhas = cursor.fetchall()
+    conn.close()
+    return [{"id": l[0], "descricao": l[1], "tipo": l[2]} for l in linhas]
+
+@app.post("/api/plano-contas")
+def criar_plano_conta(conta: PlanoContaNovo):
+    try:
+        conn = conectar_banco()
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO plano_contas (descricao, tipo) VALUES (%s, %s)', (conta.descricao, conta.tipo))
+        conn.commit()
+        conn.close()
+        return {"sucesso": True, "mensagem": "Conta adicionada!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/plano-contas/{item_id}")
+def excluir_plano_conta(item_id: int):
+    try:
+        conn = conectar_banco()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM plano_contas WHERE id = %s', (item_id,))
+        conn.commit()
+        conn.close()
+        return {"sucesso": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# -------------------------------------------------------------------
+# 15. Rota GET: Listar Metas do Ano
+# -------------------------------------------------------------------
+@app.get("/api/metas/listar/{ano}")
+def listar_metas_ano(ano: str):
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    cursor.execute('SELECT mes, meta_receita, meta_despesa FROM metas WHERE ano = %s ORDER BY mes', (ano,))
+    linhas = cursor.fetchall()
+    conn.close()
+    return [{"mes": l[0], "meta_receita": l[1], "meta_despesa": l[2]} for l in linhas]
