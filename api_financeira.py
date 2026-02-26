@@ -396,6 +396,28 @@ def criar_plano_conta(conta: PlanoContaNovo):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.put("/api/plano-contas/{item_id}")
+def atualizar_plano_conta(item_id: int, conta: PlanoContaNovo):
+    try:
+        conn = conectar_banco()
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE plano_contas 
+            SET descricao = %s, tipo = %s 
+            WHERE id = %s
+        ''', (conta.descricao, conta.tipo, item_id))
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Conta não encontrada.")
+            
+        conn.commit()
+        conn.close()
+        return {"sucesso": True, "mensagem": "Conta atualizada!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.delete("/api/plano-contas/{item_id}")
 def excluir_plano_conta(item_id: int):
     try:
