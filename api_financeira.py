@@ -7,6 +7,10 @@ import calendar
 
 app = FastAPI(title="API do Dashboard Financeiro - Real com Metas")
 
+@app.get("/")
+def pagina_inicial():
+    return {"status": "Online", "mensagem": "API do Dashboard Financeiro operando 100% na Nuvem!"}
+
 # 1. Configuração de CORS para permitir acesso web
 app.add_middleware(
     CORSMiddleware,
@@ -58,6 +62,22 @@ def iniciar_banco():
             UNIQUE(mes, ano)
         )
     ''')
+
+
+# Nova Tabela de Usuários
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id SERIAL PRIMARY KEY,
+            nome TEXT,
+            email TEXT UNIQUE,
+            senha TEXT
+        )
+    ''')
+    
+    # Cria o seu usuário padrão se ele ainda não existir
+    cursor.execute("SELECT * FROM usuarios WHERE email = 'raphael@adm.com'")
+    if not cursor.fetchone():
+        cursor.execute("INSERT INTO usuarios (nome, email, senha) VALUES ('adm', 'raphael@adm.com', '123456')")
     
     conn.commit()
     conn.close()
@@ -494,3 +514,31 @@ def listar_metas_ano(ano: str):
     linhas = cursor.fetchall()
     conn.close()
     return [{"mes": l[0], "meta_receita": l[1], "meta_despesa": l[2]} for l in linhas]
+
+# -------------------------------------------------------------------
+# 16. Rota de Autenticação (Login)
+# -------------------------------------------------------------------
+class LoginDados(BaseModel):
+    email: str
+    senha: str
+
+@app.post("/api/login")
+def fazer_login(credenciais: LoginDados):
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    
+    # Procura no banco se existe alguém com esse email e senha
+    cursor.execute('''
+        SELECT nome FROM usuarios 
+        WHERE email = %s AND senha = %s
+    ''', (credenciais.email, credenciais.senha))
+    
+    usuario = cursor.fetchone()
+    conn.close()
+    
+    if usuario:
+        # Se achou, devolve o nome para o HTML dizer "Olá, Raphael"
+        return {"sucesso": True, "nome": usuario[0]}
+    else:
+        # Erro 401 significa "Não Autorizado"
+        raise HTTPException(status_code=401, detail="Email ou senha incorretos.")
